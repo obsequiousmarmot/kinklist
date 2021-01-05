@@ -69,7 +69,6 @@ $(function(){
             $('<th>').appendTo($thead);
             $('<tbody>').appendTo($table);
             $category.append($table);
-
             return $category;
         },
         createChoice: function(){
@@ -103,47 +102,13 @@ $(function(){
             $row.addClass('kink-' + strToClass(kink.kinkName));
             return $row;
         },
-        createColumns: function(){
-            var colClasses = ['100', '50', '33', '25'];
-
-            var numCols = Math.floor((document.body.scrollWidth - 20) / 400);
-            if(!numCols) numCols = 1;
-            if(numCols > 4) numCols = 4;
-            var colClass = 'col' + colClasses[numCols - 1];
-
-            inputKinks.$columns = [];
-            for(var i = 0; i < numCols; i++){
-                inputKinks.$columns.push($('<div>').addClass('col ' + colClass).appendTo($('#InputList')));
-            }
-        },
-        placeCategories: function($categories){
-            var $body = $('body');
-            var totalHeight = 0;
-            for(var i = 0; i < $categories.length; i++) {
-                var $clone = $categories[i].clone().appendTo($body);
-                var height = $clone.height();;
-                totalHeight += height;
-                $clone.remove();
-            }
-
-            var colHeight = totalHeight / (inputKinks.$columns.length);
-            var colIndex = 0;
-            for(var i = 0; i < $categories.length; i++) {
-                var curHeight = inputKinks.$columns[colIndex].height();
-                var catHeight = $categories[i].height();
-                if(curHeight + (catHeight / 2) > colHeight) colIndex++;
-                while(colIndex >= inputKinks.$columns.length) {
-                    colIndex--;
-                }
-                inputKinks.$columns[colIndex].append($categories[i]);
-            }
-        },
+        
         fillInputList: function(){
-            $('#InputList').empty();
-            inputKinks.createColumns();
+            var $InputList = $('#InputList')
+            $InputList.empty();
 
-            var $categories = [];
             var kinkCats = Object.keys(kinks);
+            var $categories = new Array(kinkCats.length);
             for(var i = 0; i < kinkCats.length; i++) {
                 var catName = kinkCats[i];
                 var category = kinks[catName];
@@ -156,12 +121,13 @@ $(function(){
                     $tbody.append(inputKinks.createKink(fields, kinkArr[k]));
                 }
 
-                $categories.push($category);
+                $categories[i] = $category;
             }
-            inputKinks.placeCategories($categories);
+
+            $InputList.append($categories)
 
             // Make things update hash
-            $('#InputList').find('button.choice').on('click', function(){
+            $InputList.find('button.choice').on('click', function(){
                 location.hash = inputKinks.updateHash();
             });
         },
@@ -176,22 +142,16 @@ $(function(){
             $('#Export').on('click', inputKinks.export);
             $('#URL').on('click', function(){ this.select(); });
 
-            // On resize, redo columns
-            (function(){
-
-                var lastResize = 0;
-                $(window).on('resize', function(){
-                    var curTime = (new Date()).getTime();
-                    lastResize = curTime;
-                    setTimeout(function(){
-                        if(lastResize === curTime) {
-                            inputKinks.fillInputList();
-                            inputKinks.parseHash();
-                        }
-                    }, 500);
-                });
-
-            })();
+            Macy({
+                container: '#InputList',
+                margin: 10,
+                columns: 3,
+                useContainerForBreakpoints: true,
+                breakAt: {
+                    805: 1,
+                    1185: 2,
+                }
+            })
         },
         hashChars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.=+*^!@",
         maxPow: function(base, maxVal) {
